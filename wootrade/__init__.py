@@ -1,1 +1,1 @@
-from wootrade.clinet import Client, AsyncClient
+from wootrade.clinet import Client
