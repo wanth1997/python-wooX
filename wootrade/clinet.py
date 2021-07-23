@@ -28,6 +28,7 @@ class BaseClient:
         self.API_SECRET = secret
         if not application_id:
             raise Exception("NoApplicationIdError")
+        self.application_id = application_id
         self.testnet = testnet
         self.session = self._init_session()
         self.header = {}
@@ -117,7 +118,6 @@ class Client(BaseClient):
         self, method, ep: str, signed: bool, v: str = "", **kwargs
     ):
         uri = self._create_api_uri(ep, v)
-        # print(uri)
         return self._request(method, uri, signed, **kwargs)
 
     def _get(self, ep, signed=False, v: str = "", **kwargs):
@@ -182,3 +182,89 @@ class Client(BaseClient):
 
     def get_account_info(self) -> Dict:
         return self._get("client/info", True)
+
+
+class AsyncClient(BaseClient):
+    def __init__(
+        self,
+        api: Optional[str],
+        secret: Optional[str],
+        application_id: str,
+        testnet: bool,
+        loop=None,
+    ):
+        self.loop = loop or asyncio.get_event_loop()
+        super().__init__(
+            api=api,
+            secret=secret,
+            application_id=application_id,
+            testnet=testnet,
+        )
+
+    @classmethod
+    async def create(
+        cls,
+        api: Optional[str],
+        secret: Optional[str],
+        application_id: str,
+        testnet: bool,
+        loop=None,
+    ):
+        self = cls(api, secret, application_id, testnet, loop)
+        return self
+
+    def _init_session(self) -> aiohttp.ClientSession:
+        session = aiohttp.ClientSession(
+            loop=self.loop, headers=self._get_header()
+        )
+        return session
+
+    async def close_connection(self):
+        if self.session:
+            assert self.session
+            await self.session.close()
+
+    async def _request(self, method, uri: str, signed: bool, **kwargs):
+        sorted_arg = {key: value for key, value in sorted(kwargs.items())}
+        if signed:
+            ts = str(int(time.time() * 1000))
+            sig = self._signature(ts, **sorted_arg)
+            self.header["x-api-signature"] = sig
+            self.header["x-api-timestamp"] = ts
+            self.session.headers.update(self.header)
+
+        async with getattr(self.session, method)(
+            uri, params=sorted_arg
+        ) as response:
+            self.response = response
+            return await self._handle_response(response)
+
+    async def _handle_response(self, response: requests.Response):
+        if response.status_code == 200:
+            return await response.json()
+        else:
+            await print(f"{response.text}")
+            raise Exception(
+                f"Wootrade server return status code {response.status_code}"
+            )
+
+    async def _request_api(
+        self, method, ep: str, signed: bool, v: str = "", **kwargs
+    ):
+        uri = self._create_api_uri(ep, v)
+        return self._request(method, uri, signed, **kwargs)
+
+    async def _get(self, ep, signed=False, v: str = "", **kwargs):
+        return await self._request_api("get", ep, signed, v, **kwargs)
+
+    async def _post(self, ep, signed=False, v: str = "", **kwargs) -> Dict:
+        return await self._request_api("post", ep, signed, v, **kwargs)
+
+    async def _put(self, ep, signed=False, v: str = "", **kwargs) -> Dict:
+        return await self._request_api("put", ep, signed, v, **kwargs)
+
+    async def _delete(self, ep, signed=False, v: str = "", **kwargs) -> Dict:
+        return await self._request_api("delete", ep, signed, v, **kwargs)
+
+    async def get_available_symbol(self):
+        return await self._get("public/info")
