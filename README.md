@@ -1,15 +1,13 @@
-# python-wootrade
+# Package User Zone
 
-## Package User Zone
-
-### Pre-request
+## Pre-request
 
 ```bash
 pip install python-wootrade # Not Done yet
 ```
 
-### Sample Code
-#### Restful Api
+## Sample Code
+### Restful Api
 ```python
 from wootrade.clinet import Client
 import os
@@ -23,7 +21,7 @@ info = client.get_exchange_info(symbol="SPOT_BTC_USDT")
 print(info)
 ```
 
-#### Websocket
+### Websocket
 
 ```python
 from wootrade import ThreadedWebsocketManager
@@ -52,16 +50,15 @@ wsm.subscribe(
     event="subscribe",
 )
 ```
+# Developer Zone
 
-## Developer Zone
-
-### Lint
+## Lint
 
 ```bash
 $ make lint
 ```
 
-### Test
+## Test
 
 ```bash
 # Should Set up env variable API, SECRET and APPLICATION_ID in tox.ini
