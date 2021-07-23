@@ -9,7 +9,7 @@ pip install python-wootrade
 ## Sample Code
 ### Restful Api
 ```python
-from wootrade.clinet import Client
+from wootrade.client import Client
 import os
 
 API = os.getenv("API")
