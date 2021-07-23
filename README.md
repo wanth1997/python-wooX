@@ -2,6 +2,12 @@
 
 ## Package User Zone
 
+### Pre-request
+
+```bash
+pip install python-wootrade # Not Done yet
+```
+
 ### Sample Code
 #### Restful Api
 ```python
