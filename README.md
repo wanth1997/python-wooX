@@ -14,6 +14,7 @@ $ make test #need to set up API and SECRET and application id
 
 ## Sample Code
 
+### Restful Api
 ```python
 from wootrade.clinet import Client
 import os
@@ -25,4 +26,22 @@ APPLICATION_ID = os.getenv("APPLICATION_ID")
 client = Client(API, SECRET, APPLICATION_ID, testnet=True)
 info = client.get_exchange_info(symbol="SPOT_BTC_USDT")
 print(info)
+```
+
+### Websocket
+
+```python
+from wootrade import ThreadedWebsocketManager
+
+def on_read(payload):
+    print(payload)
+
+API = os.getenv("API")
+SECRET = os.getenv("SECRET")
+APPLICATION_ID = os.getenv("APPLICATION_ID")
+
+wsm = ThreadedWebsocketManager(API, SECRET, APPLICATION_ID, True)
+wsm.start()
+wsm.start_unauth_socket(on_read, "market_connection")
+wsm.subscribe("SPOT_BTC_USDT@kline_1m", "market_connection")
 ```
