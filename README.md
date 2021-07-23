@@ -1,6 +1,6 @@
 # Package User Zone
 
-## Pre-request
+## Installation
 
 ```bash
 pip install python-wootrade
