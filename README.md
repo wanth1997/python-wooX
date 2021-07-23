@@ -3,7 +3,7 @@
 ## Pre-request
 
 ```bash
-pip install python-wootrade # Not Done yet
+pip install python-wootrade
 ```
 
 ## Sample Code
