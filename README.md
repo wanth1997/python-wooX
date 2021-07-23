@@ -42,6 +42,6 @@ APPLICATION_ID = os.getenv("APPLICATION_ID")
 
 wsm = ThreadedWebsocketManager(API, SECRET, APPLICATION_ID, True)
 wsm.start()
-wsm.start_unauth_socket(on_read, "market_connection")
-wsm.subscribe("SPOT_BTC_USDT@kline_1m", "market_connection")
+wsm.start_socket(on_read, conn_name="market_connection", auth=False)
+wsm.subscribe("market_connection", topic="SPOT_BTC_USDT@kline_1m", id="123", event="subscribe")
 ```
