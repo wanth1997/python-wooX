@@ -310,7 +310,7 @@ class ThreadedWebsocketManager(ThreadedApiManager):
             socket_name=socket_name,
         )
 
-    def subscribe(self, topic: str, conn_name: str, callback: Callable):
+    def subscribe(self, topic: str, conn_name: str):
         while not self._bsm:
             time.sleep(0.1)
         asyncio.run(self._bsm.subscribe(topic, conn_name))
