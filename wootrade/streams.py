@@ -8,8 +8,8 @@ from random import random
 from typing import Optional, List, Dict, Callable, Any
 
 import websockets as ws
-
 from wootrade import AsyncClient
+from wootrade import signature
 from .threaded_stream import ThreadedApiManager
 
 KEEPALIVE_TIMEOUT = 5 * 60  # 5 minutes
@@ -201,15 +201,23 @@ class ReconnectingWebsocket:
             await self.connect()
         else:
             logging.error(f"Max reconnections {self.MAX_RECONNECTS} reached:")
-            raise WootradeWebsocketUnableToConnect
+            raise "MaximumReconnectRetry"
 
 
 class WootradeSocketManager:
     STREAM_URL = "wss://wss.woo.network/ws/stream/{}"
     STREAM_TESTNET_URL = "wss://wss.staging.woo.network/ws/stream/{}"
+    PSTREAM_URL = "wss://wss.woo.network/v2/ws/private/stream/{}"
+    PSTREAM_TESTNET_URL = (
+        "wss://wss.staging.woo.network/v2/ws/private/stream/{}"
+    )
 
     def __init__(
-        self, client: AsyncClient, loop=None, user_timeout=KEEPALIVE_TIMEOUT
+        self,
+        client: AsyncClient,
+        loop=None,
+        user_timeout=KEEPALIVE_TIMEOUT,
+        auth: bool = False,
     ):
         self._conns = {}
         self._loop = loop or asyncio.get_event_loop()
@@ -222,31 +230,37 @@ class WootradeSocketManager:
     def _init_stream_url(self, app_id):
         self.STREAM_URL = self.STREAM_URL.format(app_id)
         self.STREAM_TESTNET_URL = self.STREAM_TESTNET_URL.format(app_id)
+        self.PSTREAM_URL = self.PSTREAM_URL.format(app_id)
+        self.PSTREAM_TESTNET_URL = self.PSTREAM_TESTNET_URL.format(app_id)
+
         self.ws_url = self.STREAM_URL
+        self.private_ws_url = self.PSTREAM_URL
         if self.testnet:
             self.ws_url = self.STREAM_TESTNET_URL
+            self.private_ws_url = self.PSTREAM_TESTNET_URL
 
     def _get_socket(
-        self,
-        socket_name: str,
-        is_binary: bool = False,
+        self, socket_name: str, is_binary: bool = False, auth: bool = False
     ) -> str:
         conn_id = f"{socket_name}"
+        if auth:
+            url = self.private_ws_url
+        else:
+            url = self.ws_url
         if conn_id not in self._conns:
             self._conns[conn_id] = ReconnectingWebsocket(
                 loop=self._loop,
                 name=socket_name,
-                url=self.ws_url,
+                url=url,
                 exit_coro=self._exit_socket,
                 is_binary=is_binary,
             )
 
         return self._conns[conn_id]
 
-    async def subscribe(self, topic, conn_name):
+    async def subscribe(self, conn_name: str, **params):
         try:
-            sub_msg = {"id": conn_name, "topic": topic, "event": "subscribe"}
-            await self._conns[conn_name].send_msg(sub_msg)
+            await self._conns[conn_name].send_msg(params)
         except KeyError:
             self._log.warning(
                 f"Connection name: <{conn_name}> not create and start!"
@@ -255,8 +269,8 @@ class WootradeSocketManager:
     async def _exit_socket(self, name: str):
         await self._stop_socket(name)
 
-    def get_socket(self, socket_name):
-        return self._get_socket(socket_name)
+    def get_socket(self, socket_name, auth: bool = False):
+        return self._get_socket(socket_name, auth=auth)
 
     async def _stop_socket(self, conn_key):
         if conn_key not in self._conns:
@@ -275,21 +289,24 @@ class ThreadedWebsocketManager(ThreadedApiManager):
     ):
         super().__init__(api_key, api_secret, application_id, testnet)
         self._bsm: Optional[WootradeSocketManager] = None
+        self.api = api_key
+        self.secret = api_secret
 
     async def _before_socket_listener_start(self):
         assert self._client
         self._bsm = WootradeSocketManager(client=self._client, loop=self._loop)
 
-    def _start_unauth_socket(
+    def _start_socket(
         self,
         callback: Callable,
         socket_name: str,
+        auth: bool = False,
     ) -> str:
         while not self._bsm:
             time.sleep(0.1)
 
-        socket = getattr(self._bsm, "get_socket")(socket_name)
-        name = socket._name  # noqa
+        socket = getattr(self._bsm, "get_socket")(socket_name, auth=auth)
+        name = socket._name
         self._socket_running[name] = True
         self._loop.call_soon_threadsafe(
             asyncio.create_task,
@@ -298,17 +315,30 @@ class ThreadedWebsocketManager(ThreadedApiManager):
 
         return socket
 
-    def start_unauth_socket(
+    def start_socket(
         self,
         callback: Callable,
         socket_name: str,
+        auth: bool = False,
     ) -> str:
-        return self._start_unauth_socket(
+        return self._start_socket(
             callback=callback,
             socket_name=socket_name,
+            auth=auth,
         )
 
-    def subscribe(self, topic: str, conn_name: str):
+    def subscribe(self, conn_name: str, **params):
         while not self._bsm:
             time.sleep(0.1)
-        asyncio.run(self._bsm.subscribe(topic, conn_name))
+        asyncio.run(self._bsm.subscribe(conn_name, **params))
+
+    def authentication(self, conn_name="private_connection"):
+        ts = str(int(time.time() * 1000))
+        sign = signature(ts, self.secret)
+        params = {}
+        params["apikey"] = self.api
+        params["sign"] = sign
+        params["timestamp"] = ts
+        self.subscribe(
+            conn_name=conn_name, id=conn_name, event="auth", params=params
+        )

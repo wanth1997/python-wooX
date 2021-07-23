@@ -8,6 +8,7 @@ import requests
 import time
 from urllib.parse import urlencode
 from wootrade import WootradeAPIException, WootradeValueError
+from wootrade import signature
 
 
 class BaseClient:
@@ -70,23 +71,6 @@ class BaseClient:
             except ValueError:
                 raise WootradeValueError(response)
 
-    def _signature(self, ts: str, **kwargs):
-        msg = ""
-        sorted_arg = {key: value for key, value in sorted(kwargs.items())}
-        for key, value in sorted_arg.items():
-            if msg:
-                msg += "&"
-            msg += f"{key}={value}"
-        msg += f"|{ts}"
-        bytes_key = bytes(str(self.API_SECRET), "utf-8")
-        bytes_msg = bytes(msg, "utf-8")
-        signature = (
-            hmac.new(bytes_key, msg=bytes_msg, digestmod=hashlib.sha256)
-            .hexdigest()
-            .upper()
-        )
-        return signature
-
 
 class Client(BaseClient):
     def __init__(
@@ -138,7 +122,7 @@ class Client(BaseClient):
         sorted_arg = {key: value for key, value in sorted(kwargs.items())}
         if signed:
             ts = str(int(time.time() * 1000))
-            sig = self._signature(ts, **sorted_arg)
+            sig = signature(ts, self.API_SECRET, **sorted_arg)
             self.header["x-api-signature"] = sig
             self.header["x-api-timestamp"] = ts
             self.session.headers.update(self.header)
@@ -230,7 +214,7 @@ class AsyncClient(BaseClient):
         sorted_arg = {key: value for key, value in sorted(kwargs.items())}
         if signed:
             ts = str(int(time.time() * 1000))
-            sig = self._signature(ts, **sorted_arg)
+            sig = signature(ts, self.API_SECRET, **sorted_arg)
             self.header["x-api-signature"] = sig
             self.header["x-api-timestamp"] = ts
             self.session.headers.update(self.header)
