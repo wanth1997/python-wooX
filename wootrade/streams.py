@@ -10,8 +10,6 @@ from typing import Optional, List, Dict, Callable, Any
 import websockets as ws
 
 from wootrade import AsyncClient
-from .exceptions import WootradeWebsocketUnableToConnect
-from .enums import FuturesType
 from .threaded_stream import ThreadedApiManager
 
 KEEPALIVE_TIMEOUT = 5 * 60  # 5 minutes
@@ -121,8 +119,8 @@ class ReconnectingWebsocket:
             if self.ws.state == ws.protocol.State.CLOSED:
                 try:
                     await self._reconnect()
-                except WootradeWebsocketUnableToConnect:
-                    return {"e": "error", "m": "Max reconnect retries reached"}
+                except Exception as e:
+                    print(e)
                 else:
                     break
             try:

@@ -1,6 +1,5 @@
 from typing import Dict, Optional, List, Tuple
 
-
 import aiohttp
 import asyncio
 import hashlib
@@ -8,6 +7,7 @@ import hmac
 import requests
 import time
 from urllib.parse import urlencode
+from wootrade import WootradeAPIException, WootradeValueError
 
 
 class BaseClient:
@@ -60,13 +60,15 @@ class BaseClient:
         self.ws_url.format(application_id)
 
     def _handle_response(self, response: requests.Response):
-        if response.status_code == 200:
+        code = response.status_code
+        if code == 200:
             return response.json()
         else:
-            print(f"{response.text}")
-            raise Exception(
-                f"Wootrade server return status code {response.status_code}"
-            )
+            try:
+                resp_json = response.json()
+                raise WootradeAPIException(resp_json, code)
+            except ValueError:
+                raise WootradeValueError(response)
 
     def _signature(self, ts: str, **kwargs):
         msg = ""
@@ -240,13 +242,15 @@ class AsyncClient(BaseClient):
             return await self._handle_response(response)
 
     async def _handle_response(self, response: requests.Response):
-        if response.status_code == 200:
-            return await response.json()
+        code = response.status_code
+        if code == 200:
+            return response.json()
         else:
-            await print(f"{response.text}")
-            raise Exception(
-                f"Wootrade server return status code {response.status_code}"
-            )
+            try:
+                resp_json = response.json()
+                raise WootradeAPIException(resp_json, code)
+            except ValueError:
+                raise WootradeValueError(response)
 
     async def _request_api(
         self, method, ep: str, signed: bool, v: str = "", **kwargs
