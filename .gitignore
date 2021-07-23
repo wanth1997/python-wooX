@@ -170,4 +170,5 @@ pip-selfcheck.json
 .history
 .ionide
 
+.tox.ini
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,virtualenv
