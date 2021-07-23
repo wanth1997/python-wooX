@@ -9,7 +9,8 @@ $ make lint
 ## Test
 
 ```bash
-$ make test #need to set up API and SECRET and application id
+# Should Set up env variable API, SECRET and APPLICATION_ID in tox.ini
+$ make test 
 ```
 
 ## Sample Code
