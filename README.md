@@ -65,3 +65,5 @@ $ make lint
 $ make test 
 ```
 
+## Donation
+**I put dontaion address here because all open source Crypto API did. It seems unprofessional if I don't**
