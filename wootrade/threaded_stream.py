@@ -1,6 +1,6 @@
 import asyncio
 import threading
-from typing import Optional, Dict
+from typing import Callable, Optional, Dict
 from wootrade import AsyncClient
 
 
@@ -38,9 +38,11 @@ class ThreadedApiManager(threading.Thread):
         while self._socket_running:
             await asyncio.sleep(0.2)
 
-    async def start_listener(self, socket, path: str, callback):
+    async def start_listener(
+        self, socket, name: str, callback, ping: Optional[Callable] = None
+    ):
         async with socket as s:
-            while self._socket_running[path]:
+            while self._socket_running[name]:
                 try:
                     msg = await asyncio.wait_for(s.recv(), 3)
                 except asyncio.TimeoutError:
@@ -48,8 +50,10 @@ class ThreadedApiManager(threading.Thread):
                     continue
                 if not msg:
                     continue
+                if msg["event"] == "ping":
+                    ping(name)
                 callback(msg)
-        del self._socket_running[path]
+        del self._socket_running[name]
 
     def run(self):
         self._loop.run_until_complete(self.socket_listener())

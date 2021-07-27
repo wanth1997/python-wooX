@@ -310,7 +310,7 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         self._socket_running[name] = True
         self._loop.call_soon_threadsafe(
             asyncio.create_task,
-            self.start_listener(socket, socket._name, callback),
+            self.start_listener(socket, socket._name, callback, self.ping),
         )
 
         return socket
@@ -330,7 +330,14 @@ class ThreadedWebsocketManager(ThreadedApiManager):
     def subscribe(self, conn_name: str, **params):
         while not self._bsm:
             time.sleep(0.1)
-        asyncio.run(self._bsm.subscribe(conn_name, **params))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            loop.create_task(self._bsm.subscribe(conn_name, **params))
+        else:
+            asyncio.run(self._bsm.subscribe(conn_name, **params))
 
     def authentication(self, conn_name="private_connection"):
         ts = str(int(time.time() * 1000))
@@ -342,3 +349,6 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         self.subscribe(
             conn_name=conn_name, id=conn_name, event="auth", params=params
         )
+
+    def ping(self, name):
+        self.subscribe(name, event="pong")
