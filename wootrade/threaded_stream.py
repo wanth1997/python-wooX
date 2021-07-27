@@ -50,7 +50,7 @@ class ThreadedApiManager(threading.Thread):
                     continue
                 if not msg:
                     continue
-                if msg["event"] == "ping":
+                if "event" in msg and msg["event"] == "ping":
                     ping(name)
                 callback(msg)
         del self._socket_running[name]
