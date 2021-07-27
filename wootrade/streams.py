@@ -136,6 +136,7 @@ class ReconnectingWebsocket:
                 logging.debug(f"incomplete read error {e}")
             except Exception as e:
                 logging.debug(f"exception {e}")
+                await self._reconnect()
                 break
             else:
                 if self.ws_state in (
