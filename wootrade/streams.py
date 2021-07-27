@@ -136,6 +136,7 @@ class ReconnectingWebsocket:
                 logging.debug(f"incomplete read error {e}")
             except Exception as e:
                 logging.debug(f"exception {e}")
+                await self._reconnect()
                 break
             else:
                 if self.ws_state in (
@@ -216,13 +217,10 @@ class WootradeSocketManager:
         self,
         client: AsyncClient,
         loop=None,
-        user_timeout=KEEPALIVE_TIMEOUT,
-        auth: bool = False,
     ):
         self._conns = {}
         self._loop = loop or asyncio.get_event_loop()
         self._client = client
-        self._user_timeout = user_timeout
         self.testnet = self._client.testnet
         self._log = logging.getLogger("WootradeSocketManager")
         self._init_stream_url(client.application_id)
