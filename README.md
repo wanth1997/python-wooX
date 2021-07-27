@@ -37,14 +37,16 @@ wsm = ThreadedWebsocketManager(API, SECRET, APPLICATION_ID, testnet=True)
 wsm.start()
 
 # Un-auth subscribe
-wsm.start_socket(on_read, conn_name="market_connection", auth=False)
-wsm.subscribe("market_connection", topic="SPOT_BTC_USDT@kline_1m", id="ClientID", event="subscribe")
+name = 'market_connection'
+wsm.start_socket(on_read, conn_name=name, auth=False)
+wsm.subscribe(name, topic="SPOT_BTC_USDT@kline_1m", id="ClientID", event="subscribe")
 
 # Auth subscribe
-wsm.start_socket(on_read, conn_name="private_connection", auth=True)
-wsm.authentication(conn_name="private_connection")
+name = 'private_connection'
+wsm.start_socket(on_read, conn_name=name, auth=True)
+wsm.authentication(conn_name=name)
 wsm.subscribe(
-    "private_connection",
+    name,
     topic="executionreport",
     id="ClientID",
     event="subscribe",
