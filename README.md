@@ -9,7 +9,7 @@ pip install python-wootrade
 ## Sample Code
 ### Restful Api
 ```python
-from wootrade.client import Client
+from wootrade import Client
 import os
 
 API = os.getenv("API")
@@ -70,6 +70,6 @@ $ make test
 ## Donation
 **I put dontaion address here because all open source Crypto API did. It seems unprofessional if I don't**
 
-> WOO:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
+WOO:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
 
-> ETH:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
+ETH:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
