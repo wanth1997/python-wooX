@@ -1,5 +1,5 @@
 import pytest
-from wootrade.clinet import Client
+from wootrade import Client
 from wootrade import ThreadedWebsocketManager
 import os
 

@@ -23,12 +23,9 @@ class WSListenerState(Enum):
 
 
 class ReconnectingWebsocket:
-
     MAX_RECONNECTS = 5
     MAX_RECONNECT_SECONDS = 60
-    MIN_RECONNECT_WAIT = 0.1
-    TIMEOUT = 10
-    NO_MESSAGE_RECONNECT_TIMEOUT = 60
+    TIMEOUT = 60
 
     def __init__(
         self,
@@ -129,6 +126,7 @@ class ReconnectingWebsocket:
                 )
             except asyncio.TimeoutError:
                 logging.debug(f"no message in {self.TIMEOUT} seconds")
+                await self._reconnect()
             except asyncio.CancelledError as e:
                 logging.debug(f"cancelled error {e}")
                 break
