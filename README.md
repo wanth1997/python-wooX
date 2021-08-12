@@ -38,7 +38,7 @@ wsm.start()
 
 # Un-auth subscribe
 name = 'market_connection'
-wsm.start_socket(on_read, conn_name=name, auth=False)
+wsm.start_socket(on_read, socket_name=name, auth=False)
 wsm.subscribe(name, topic="SPOT_BTC_USDT@kline_1m", id="ClientID", event="subscribe")
 
 # Auth subscribe
