@@ -2,8 +2,7 @@ from typing import Dict, Optional, List, Tuple
 
 import aiohttp
 import asyncio
-import hashlib
-import hmac
+from concurrent.futures._base import TimeoutError
 import requests
 import time
 from urllib.parse import urlencode
@@ -34,6 +33,7 @@ class BaseClient:
         self.session = self._init_session()
         self.header = {}
         self._init_url(application_id)
+        self.TIMEOUT = 45
 
     def _get_header(self) -> Dict:
         header = {
@@ -119,16 +119,24 @@ class Client(BaseClient):
         return self._request_api("delete", ep, signed, v, **kwargs)
 
     def _request(self, method, uri: str, signed: bool, **kwargs):
-        sorted_arg = {key: value for key, value in sorted(kwargs.items())}
-        if signed:
-            ts = str(int(time.time() * 1000))
-            sig = signature(ts, self.API_SECRET, **sorted_arg)
-            self.header["x-api-signature"] = sig
-            self.header["x-api-timestamp"] = ts
-            self.session.headers.update(self.header)
+        try:
+            k = kwargs
+            k["timeout"] = self.TIMEOUT
+            sorted_arg = {key: value for key, value in sorted(kwargs.items())}
+            if signed:
+                ts = str(int(time.time() * 1000))
+                sig = signature(ts, self.API_SECRET, **sorted_arg)
+                self.header["x-api-signature"] = sig
+                self.header["x-api-timestamp"] = ts
+                self.session.headers.update(self.header)
 
-        self.response = getattr(self.session, method)(uri, params=sorted_arg)
-        return self._handle_response(self.response)
+            self.response = getattr(self.session, method)(
+                uri, params=sorted_arg
+            )
+            return self._handle_response(self.response)
+        except Exception as e:
+            print(f"[ERROR] Request failed!")
+            print(e)
 
     def get_exchange_info(self, symbol: str) -> Dict:
         return self._get(f"public/info/{symbol}")
@@ -171,6 +179,7 @@ class Client(BaseClient):
 
     def get_market_trades(self, **params) -> Dict:
         return self._get("public/market_trades", **params)
+
 
 class AsyncClient(BaseClient):
     def __init__(
