@@ -47,7 +47,7 @@ wsm.subscribe(name, topic="SPOT_BTC_USDT@kline_1m", id="ClientID", event="subscr
 
 # Auth subscribe
 name = 'private_connection'
-wsm.start_socket(on_read, conn_name=name, auth=True)
+wsm.start_socket(on_read, socket_name=name, auth=True)
 wsm.authentication(conn_name=name)
 wsm.subscribe(
     name,
