@@ -1,6 +1,7 @@
 # Trader Zone
 
 Wootrade is a zero fee crypto exchange, [click here](https://x.woo.org/register?ref=56LELBCU) to register with my referal code.
+Give this package a star if you like it!
 
 # Package User Zone
 
