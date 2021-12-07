@@ -254,12 +254,12 @@ class WootradeSocketManager:
 
         return self._conns[conn_id]
 
-    async def subscribe(self, conn_name: str, **params):
+    async def subscribe(self, socket_name: str, **params):
         try:
-            await self._conns[conn_name].send_msg(params)
+            await self._conns[socket_name].send_msg(params)
         except KeyError:
             self._log.warning(
-                f"Connection name: <{conn_name}> not create and start!"
+                f"Connection name: <{socket_name}> not create and start!"
             )
 
     async def _exit_socket(self, name: str):
@@ -323,7 +323,7 @@ class ThreadedWebsocketManager(ThreadedApiManager):
             auth=auth,
         )
 
-    def subscribe(self, conn_name: str, **params):
+    def subscribe(self, socket_name: str, **params):
         while not self._bsm:
             time.sleep(0.1)
         try:
@@ -331,11 +331,11 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         except RuntimeError:
             loop = None
         if loop and loop.is_running():
-            loop.create_task(self._bsm.subscribe(conn_name, **params))
+            loop.create_task(self._bsm.subscribe(socket_name, **params))
         else:
-            asyncio.run(self._bsm.subscribe(conn_name, **params))
+            asyncio.run(self._bsm.subscribe(socket_name, **params))
 
-    def authentication(self, conn_name="private_connection"):
+    def authentication(self, socket_name="private_connection"):
         ts = str(int(time.time() * 1000))
         sign = signature(ts, self.secret)
         params = {}
@@ -343,7 +343,7 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         params["sign"] = sign
         params["timestamp"] = ts
         self.subscribe(
-            conn_name=conn_name, id=conn_name, event="auth", params=params
+            socket_name=socket_name, id=socket_name, event="auth", params=params
         )
 
     def ping(self, name):
