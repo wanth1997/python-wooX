@@ -1,8 +1,0 @@
-aiohttp
-dateparser
-requests
-websockets
-black
-pytest
-tox
-atomicwrites

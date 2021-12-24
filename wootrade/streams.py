@@ -343,7 +343,10 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         params["sign"] = sign
         params["timestamp"] = ts
         self.subscribe(
-            socket_name=socket_name, id=socket_name, event="auth", params=params
+            socket_name=socket_name,
+            id=socket_name,
+            event="auth",
+            params=params,
         )
 
     def ping(self, name):

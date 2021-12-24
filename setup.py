@@ -4,7 +4,7 @@ import sys
 
 setup(
     name="python-wootrade",
-    version="0.1.8",
+    version="0.1.10",
     author="tinghsuwan",
     author_email="wanth1997@gmail.com",
     description="Wootrade python API",
