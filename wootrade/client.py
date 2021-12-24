@@ -171,6 +171,9 @@ class Client(BaseClient):
     def get_orders(self, **params) -> Dict:
         return self._get("orders", True, **params)
 
+    def get_klines(self, **params) -> Dict:
+        return self._get("kline", True, **params)
+    
     def get_current_holding(self, **params) -> Dict:
         return self._get("client/holding", True, "v2", **params)
 
