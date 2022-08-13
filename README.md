@@ -72,10 +72,3 @@ $ make lint
 # Should Set up env variable API, SECRET and APPLICATION_ID in tox.ini
 $ make test 
 ```
-
-## Donation
-**I put dontaion address here because all open source Crypto API did. It seems unprofessional if I don't**
-
-WOO:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
-
-ETH:0xB32A3CbEaD5667e026CCEC7118b132DCA349A8e6
