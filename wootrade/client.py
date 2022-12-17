@@ -183,6 +183,9 @@ class Client(BaseClient):
     def get_market_trades(self, **params) -> Dict:
         return self._get("public/market_trades", **params)
 
+    def get_funding_rate_history(self, **params) -> Dict:
+        return self._get("public/funding_rate_history", **params)
+
 
 class AsyncClient(BaseClient):
     def __init__(
