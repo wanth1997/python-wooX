@@ -172,7 +172,7 @@ class ReconnectingWebsocket:
             logging.debug(f"ignore message {self.ws_state}")
 
     def _get_reconnect_wait(self, attempts: int) -> int:
-        expo = 2 ** attempts
+        expo = 2**attempts
         return round(random() * min(self.MAX_RECONNECT_SECONDS, expo - 1) + 1)
 
     async def before_reconnect(self):

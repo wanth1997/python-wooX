@@ -1,19 +1,20 @@
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional
 
 import aiohttp
 import asyncio
-from concurrent.futures._base import TimeoutError
 import requests
 import time
-from urllib.parse import urlencode
-from wootrade import WootradeAPIException, WootradeValueError
 from wootrade import signature
+import datetime
+import json
+
+from loguru import logger as log
 
 
 class BaseClient:
-    API_URL = "http://api.woo.network"
+    API_URL = "https://api.woo.org"
     API_TESTNET_URL = "http://api.staging.woo.network"
-    WS_URL = "wss://wss.woo.network/ws/stream/{}"
+    WS_URL = "wss://wss.woo.org/ws/stream/{}"
     WS_TESTNET_URL = "wss://wss.staging.woo.network/ws/stream/{}"
     API_VERSION = "v1"
 
@@ -65,11 +66,8 @@ class BaseClient:
         if code == 200:
             return response.json()
         else:
-            try:
-                resp_json = response.json()
-                raise WootradeAPIException(resp_json, code)
-            except ValueError:
-                raise WootradeValueError(response)
+            log.error(response.text)
+            raise ValueError(response.text)
 
 
 class Client(BaseClient):
@@ -104,7 +102,10 @@ class Client(BaseClient):
         self, method, ep: str, signed: bool, v: str = "", **kwargs
     ):
         uri = self._create_api_uri(ep, v)
-        return self._request(method, uri, signed, **kwargs)
+        if v == "v3":
+            return self._v3_request(method, ep, uri, signed, **kwargs)
+        else:
+            return self._request(method, uri, signed, **kwargs)
 
     def _get(self, ep, signed=False, v: str = "", **kwargs):
         return self._request_api("get", ep, signed, v, **kwargs)
@@ -118,25 +119,71 @@ class Client(BaseClient):
     def _delete(self, ep, signed=False, v: str = "", **kwargs) -> Dict:
         return self._request_api("delete", ep, signed, v, **kwargs)
 
+    def _v3_request(
+        self, method: str, ep: str, uri: str, signed: bool, **kwargs
+    ):
+        try:
+            sorted_arg = {key: value for key, value in sorted(kwargs.items())}
+            json_formatted_str = ""
+            if signed:
+                ts = round(datetime.datetime.now().timestamp() * 1000)
+                msg = str(ts) + f"{method.upper()}/v3/{ep}"
+
+                if sorted_arg != {}:
+                    json_formatted_str = json.dumps(sorted_arg, indent=4)
+                    msg += json_formatted_str
+
+                sig = signature(msg, self.API_SECRET)
+                header = {
+                    "Content-Type": "application/json",
+                    "x-api-signature": sig,
+                    "x-api-key": self.API_KEY,
+                    "x-api-timestamp": str(ts),
+                }
+                self.session.headers.update(header)
+
+            uri = (
+                uri + "?" + "&".join(f"{k}={v}" for k, v in sorted_arg.items())
+            )
+            self.response = getattr(self.session, method)(
+                uri, data=json_formatted_str
+            )
+
+            return self._handle_response(self.response)
+        except Exception as e:
+            log.error(f"[ERROR] Request failed!")
+            log.error(e)
+            return self._handle_response(self.response)
+
     def _request(self, method, uri: str, signed: bool, **kwargs):
         try:
-            k = kwargs
-            k["timeout"] = self.TIMEOUT
             sorted_arg = {key: value for key, value in sorted(kwargs.items())}
+            log.info(sorted_arg)
             if signed:
-                ts = str(int(time.time() * 1000))
-                sig = signature(ts, self.API_SECRET, **sorted_arg)
-                self.header["x-api-signature"] = sig
-                self.header["x-api-timestamp"] = ts
-                self.session.headers.update(self.header)
+                msg = ""
+                ts = round(datetime.datetime.now().timestamp() * 1000)
+                for key, value in sorted_arg.items():
+                    if msg:
+                        msg += "&"
+                    msg += f"{key}={value}"
+                msg += f"|{ts}"
+
+                sig = signature(msg, self.API_SECRET)
+                header = {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "x-api-signature": sig,
+                    "x-api-key": self.API_KEY,
+                    "x-api-timestamp": str(ts),
+                }
+                self.session.headers.update(header)
 
             self.response = getattr(self.session, method)(
                 uri, params=sorted_arg
             )
             return self._handle_response(self.response)
         except Exception as e:
-            print(f"[ERROR] Request failed!")
-            print(e)
+            log.error(f"[ERROR] Request failed!")
+            log.error(e)
 
     def get_exchange_info(self, symbol: str) -> Dict:
         return self._get(f"public/info/{symbol}")
@@ -151,7 +198,9 @@ class Client(BaseClient):
         return self._get("public/token")
 
     def send_order(self, **params) -> Dict:
-        return self._post("order", True, **params)
+        ret = self._post("order", True, **params)
+        log.info(ret)
+        return ret
 
     def cancel_order(self, **params) -> Dict:
         return self._delete("order", True, **params)
@@ -175,16 +224,13 @@ class Client(BaseClient):
         return self._get("kline", True, **params)
 
     def get_current_holding(self, **params) -> Dict:
-        return self._get("client/holding", True, "v2", **params)
+        return self._get("balances", True, "v3", **params)
 
     def get_account_info(self) -> Dict:
-        return self._get("client/info", True)
+        return self._get("accountinfo", True, "v3")
 
     def get_market_trades(self, **params) -> Dict:
         return self._get("public/market_trades", **params)
-
-    def get_funding_rate_history(self, **params) -> Dict:
-        return self._get("public/funding_rate_history", **params)
 
 
 class AsyncClient(BaseClient):
@@ -247,11 +293,8 @@ class AsyncClient(BaseClient):
         if code == 200:
             return response.json()
         else:
-            try:
-                resp_json = response.json()
-                raise WootradeAPIException(resp_json, code)
-            except ValueError:
-                raise WootradeValueError(response)
+            log.error(response.text)
+            raise ValueError(response.text)
 
     async def _request_api(
         self, method, ep: str, signed: bool, v: str = "", **kwargs
