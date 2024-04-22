@@ -4,7 +4,7 @@ import sys
 
 setup(
     name="python-woox",
-    version="0.2.0",
+    version="0.2.1",
     author="tinghsuwan",
     author_email="wanth1997@gmail.com",
     description="WooX python API",
