@@ -2,7 +2,7 @@
 import json
 
 
-class WootradeAPIException(Exception):
+class wooxAPIException(Exception):
     def __init__(self, resp_json, status_code):
         self.message = resp_json["message"]
         self.code = status_code
@@ -12,7 +12,7 @@ class WootradeAPIException(Exception):
         return f"APIError(code={self.api_code}): {self.message}"
 
 
-class WootradeValueError:
+class wooxValueError:
     def __init__(self, response) -> None:
         self.response = response
 

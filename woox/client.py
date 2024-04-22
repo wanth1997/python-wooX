@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import requests
 import time
-from wootrade import signature
+from woox import signature
 import datetime
 import json
 

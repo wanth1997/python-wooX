@@ -1,6 +1,6 @@
 import pytest
-from wootrade import Client
-from wootrade import ThreadedWebsocketManager
+from woox import Client
+from woox import ThreadedWebsocketManager
 import os
 
 API = os.getenv("API")

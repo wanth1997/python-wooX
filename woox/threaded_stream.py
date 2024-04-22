@@ -1,7 +1,7 @@
 import asyncio
 import threading
 from typing import Callable, Optional, Dict
-from wootrade import AsyncClient
+from woox import AsyncClient
 
 
 class ThreadedApiManager(threading.Thread):
@@ -12,7 +12,7 @@ class ThreadedApiManager(threading.Thread):
         application_id: str = "",
         testnet: bool = False,
     ):
-        """Initialise the WootradeSocketManager"""
+        """Initialise the wooxSocketManager"""
         super().__init__()
         self._loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
         self._client: Optional[AsyncClient] = None

@@ -1,4 +1,4 @@
-from wootrade import Client
+from woox import Client
 
 api = ""  # Fill your api key
 secret = ""  # Fill your secret key

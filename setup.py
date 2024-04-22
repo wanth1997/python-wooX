@@ -3,14 +3,14 @@ from setuptools import setup, find_packages
 import sys
 
 setup(
-    name="python-wootrade",
-    version="0.1.10",
+    name="python-woox",
+    version="0.2.0",
     author="tinghsuwan",
     author_email="wanth1997@gmail.com",
-    description="Wootrade python API",
+    description="WooX python API",
     license="MIT",
     url="https://github.com/wanth1997/python-wootrade",
-    packages=["wootrade"],
+    packages=["woox"],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",

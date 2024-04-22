@@ -9,13 +9,13 @@ Give this package a star if you like it!
 ## Installation
 
 ```bash
-pip install python-wootrade
+pip install python-woox
 ```
 
 ## Sample Code
 ### Restful Api
 ```python
-from wootrade import Client
+from woox import Client
 import os
 
 API = os.getenv("API")

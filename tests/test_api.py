@@ -1,5 +1,5 @@
 import pytest
-from wootrade import Client
+from woox import Client
 import os
 import datetime
 from datetime import timezone

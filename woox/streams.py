@@ -8,8 +8,8 @@ from random import random
 from typing import Optional, List, Dict, Callable, Any
 
 import websockets as ws
-from wootrade import AsyncClient
-from wootrade import signature
+from woox import AsyncClient
+from woox import signature
 from .threaded_stream import ThreadedApiManager
 
 KEEPALIVE_TIMEOUT = 5 * 60  # 5 minutes
@@ -203,7 +203,7 @@ class ReconnectingWebsocket:
             raise "MaximumReconnectRetry"
 
 
-class WootradeSocketManager:
+class wooxSocketManager:
     STREAM_URL = "wss://wss.woo.network/ws/stream/{}"
     STREAM_TESTNET_URL = "wss://wss.staging.woo.network/ws/stream/{}"
     PSTREAM_URL = "wss://wss.woo.network/v2/ws/private/stream/{}"
@@ -220,7 +220,7 @@ class WootradeSocketManager:
         self._loop = loop or asyncio.get_event_loop()
         self._client = client
         self.testnet = self._client.testnet
-        self._log = logging.getLogger("WootradeSocketManager")
+        self._log = logging.getLogger("wooxSocketManager")
         self._init_stream_url(client.application_id)
 
     def _init_stream_url(self, app_id):
@@ -284,13 +284,13 @@ class ThreadedWebsocketManager(ThreadedApiManager):
         testnet: bool = False,
     ):
         super().__init__(api_key, api_secret, application_id, testnet)
-        self._bsm: Optional[WootradeSocketManager] = None
+        self._bsm: Optional[wooxSocketManager] = None
         self.api = api_key
         self.secret = api_secret
 
     async def _before_socket_listener_start(self):
         assert self._client
-        self._bsm = WootradeSocketManager(client=self._client, loop=self._loop)
+        self._bsm = wooxSocketManager(client=self._client, loop=self._loop)
 
     def _start_socket(
         self,
